@@ -1,0 +1,57 @@
+
+Gurobi 8.1.1 (linux64, Python) logging started Mon Oct 14 13:59:53 2019
+
+Academic license - for non-commercial use only
+Optimize a model with 200 rows, 10000 columns and 20000 nonzeros
+Variable types: 0 continuous, 10000 integer (10000 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [1e+00, 1e+00]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Found heuristic solution: objective 90.0000000
+Presolve removed 19 rows and 6135 columns
+Presolve time: 0.02s
+Presolved: 181 rows, 3865 columns, 7730 nonzeros
+Variable types: 0 continuous, 3865 integer (3865 binary)
+
+Root relaxation: objective 9.400000e+01, 343 iterations, 0.00 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0      94.0000000   94.00000  0.00%     -    0s
+
+Explored 0 nodes (343 simplex iterations) in 0.03 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 2: 94 90 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 9.400000000000e+01, best bound 9.400000000000e+01, gap 0.0000%
+Optimize a model with 200 rows, 10000 columns and 20000 nonzeros
+Variable types: 0 continuous, 10000 integer (10000 binary)
+Coefficient statistics:
+  Matrix range     [1e+00, 1e+00]
+  Objective range  [5e-01, 5e-01]
+  Bounds range     [1e+00, 1e+00]
+  RHS range        [1e+00, 1e+00]
+Found heuristic solution: objective 49.2632437
+Presolve time: 0.01s
+Presolved: 200 rows, 10000 columns, 20000 nonzeros
+Variable types: 0 continuous, 10000 integer (10000 binary)
+
+Root relaxation: objective 4.964255e+01, 627 iterations, 0.01 seconds
+
+    Nodes    |    Current Node    |     Objective Bounds      |     Work
+ Expl Unexpl |  Obj  Depth IntInf | Incumbent    BestBd   Gap | It/Node Time
+
+*    0     0               0      49.6425549   49.64255  0.00%     -    0s
+
+Explored 0 nodes (627 simplex iterations) in 0.04 seconds
+Thread count was 8 (of 8 available processors)
+
+Solution count 2: 49.6426 49.2632 
+
+Optimal solution found (tolerance 1.00e-04)
+Best objective 4.964255493879e+01, best bound 4.964255493879e+01, gap 0.0000%
