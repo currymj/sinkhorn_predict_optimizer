@@ -1,5 +1,6 @@
 from bipartite_data import generate_data_linear, data_batch_format
 from true_optimal import opt_match
+from sinkhorn import sinkhorn_plan
 import torch
 import numpy as np
 from tqdm import tqdm as tqdm
@@ -17,6 +18,20 @@ def trainbatch(model, criterion, optimizer, vecs, edges, device='cuda'):
     optimizer.step()
     return save_loss
 
+
+def trainbatch_sinkhorn(model, optimizer, vecs, true_cost, device='cuda', eps=1e-1, rounds=5):
+    model.train()
+    vecs.to(device)
+    model.zero_grad()
+    predicted_cost_mat = torch.sigmoid(model(vecs)).view(true_cost.shape[0], true_cost.shape[1])
+    predicted_matching = sinkhorn_plan(-predicted_cost_mat, eps=eps, rounds=rounds)
+    loss = -torch.sum(true_cost * predicted_matching)
+    save_loss = -loss.item()
+    loss.backward()
+    optimizer.step()
+    return save_loss
+
+
 def prediction_train(model, vecs, edges, epochs=1000):
     criterion = nn.BCEWithLogitsLoss()
     optimizer = optim.Adam(model.parameters())
@@ -25,6 +40,15 @@ def prediction_train(model, vecs, edges, epochs=1000):
         loss = trainbatch(model, criterion, optimizer, vecs, edges)
         losses.append(loss)
     return model, losses
+
+def predict_optimize_train(model, vecs, edge_mat, epochs=1000, eps=1e-1, rounds=5):
+    optimizer = optim.Adam(model.parameters())
+    losses = []
+    for i in tqdm(range(epochs)):
+        loss = trainbatch_sinkhorn(model, optimizer, vecs, edge_mat, eps=eps, rounds=rounds)
+        losses.append(loss)
+    return model, losses
+
 
 def predicted_edges_to_matrix(edges):
     dim = int(np.sqrt(edges.shape[0]))
@@ -59,4 +83,15 @@ if __name__ == '__main__':
 
     print('perf on unseen test', true_perf_test)
     print('unseen opt perf', opt_perf_test)
+
+    po_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 1)])
+    po_perf_before, opt_perf = eval_true_performance(po_model, batch_x, edge_mat)
+    print('predict/optimize perf before training', po_perf_before)
+
+    trained_po_model, training_loss = predict_optimize_train(po_model, batch_x, edge_mat)
+    po_perf_after, _ = eval_true_performance(po_model, batch_x, edge_mat)
+    print('predict/optimize perf after training', po_perf_after)
+
+    true_po_test, opt_perf_test = eval_true_performance(po_model, batch_new, edge_new)
+    print('predict/optimize unseen test perf', true_po_test)
 

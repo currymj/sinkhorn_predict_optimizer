@@ -4,6 +4,7 @@ import torch
 def opt_match(cost_matrix):
     # this will have to be modified to handle multiple similar items (integer not binary)
     model = gp.Model()
+    model.setParam('OutputFlag', 0)
     x = {}
     l_n = cost_matrix.shape[0]
     r_n = cost_matrix.shape[1]
