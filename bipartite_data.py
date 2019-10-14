@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 
 def generate_data_linear(dim = 10, N = 100):
     u_feats = torch.rand(N, dim)
@@ -8,6 +9,15 @@ def generate_data_linear(dim = 10, N = 100):
 
     edge_mat = (scores_mat > 2.5).float()
 
+    return u_feats, v_feats, edge_mat
+
+
+def generate_data_rand_nn(dim = 10, N = 100):
+    rand_nn = nn.Sequential(nn.Linear(dim, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim ))
+    u_feats = torch.rand(N, dim)
+    v_feats = torch.rand(N, dim)
+    scores_mat = rand_nn(u_feats) @ (rand_nn(v_feats).t())
+    edge_mat = (scores_mat > scores_mat.median()).float()
     return u_feats, v_feats, edge_mat
 
 def data_batch_format(u_feats, v_feats, edge_mat):
