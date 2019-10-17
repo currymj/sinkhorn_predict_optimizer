@@ -1,4 +1,4 @@
-from bipartite_data import generate_data_linear, data_batch_format, generate_data_rand_nn
+from bipartite_data import generate_data_linear, data_batch_format, generate_data_rand_nn, generate_data_hide_features
 from true_optimal import opt_match
 from sinkhorn import sinkhorn_plan
 import torch
@@ -64,7 +64,8 @@ def eval_true_performance(model, feats_batch, edge_mat):
 if __name__ == '__main__':
     dim = 10
     #u_feats, v_feats, edge_mat = generate_data_linear(dim=dim, N=100)
-    u_feats, v_feats, edge_mat = generate_data_rand_nn(dim=dim, N=100)
+    #u_feats, v_feats, edge_mat = generate_data_rand_nn(dim=dim, N=100)
+    u_feats, v_feats, edge_mat = generate_data_hide_features(dim=dim*5, keep=dim, N=100)
     batch_x, batch_y = data_batch_format(u_feats, v_feats, edge_mat)
 
     predictive_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)])
@@ -79,7 +80,8 @@ if __name__ == '__main__':
     print('true perf after', true_perf_after)
 
     #u_new, v_new, edge_new = generate_data_linear(dim=dim, N=100)
-    u_new, v_new, edge_new = generate_data_rand_nn(dim=dim, N=100)
+    #u_new, v_new, edge_new = generate_data_rand_nn(dim=dim, N=100)
+    u_new, v_new, edge_new = generate_data_hide_features(dim=dim*5, keep=dim, N=100)
     batch_new, _ = data_batch_format(u_new, v_new, edge_new)
     true_perf_test, opt_perf_test = eval_true_performance(predictive_model, batch_new, edge_new)
 
