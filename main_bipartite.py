@@ -74,16 +74,21 @@ if __name__ == '__main__':
     predict_before_train_perf = []
     predict_after_train_perf = []
     predict_test_perf = []
+    predict_test_untrained_perf = []
 
     po_before_train_perf = []
     po_after_train_perf = []
     po_test_perf = []
+    po_test_untrained_perf = []
 
     for exp in range(num_experiments):
         rand_nn = nn.Sequential(nn.Linear(dim*5, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim*5)).to(device)
 
         u_feats, v_feats, edge_mat = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
         batch_x, batch_y = data_batch_format(u_feats, v_feats, edge_mat)
+
+        u_new, v_new, edge_new = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
+        batch_new, _ = data_batch_format(u_new, v_new, edge_new)
 
         predictive_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)]).to(device)
 
@@ -94,6 +99,9 @@ if __name__ == '__main__':
         predict_before_train_perf.append(true_perf_before.item())
         train_opt_perf.append(opt_perf.item())
 
+        testset_perf_before, _ = eval_true_performance(predictive_model, batch_new, edge_new)
+        predict_test_untrained_perf.append(testset_perf_before.item())
+
         trained_model, training_loss = prediction_train(predictive_model, batch_x, batch_y)
 
         true_perf_after, opt_perf = eval_true_performance(predictive_model, batch_x, edge_mat)
@@ -101,8 +109,6 @@ if __name__ == '__main__':
 
         predict_after_train_perf.append(true_perf_after.item())
 
-        u_new, v_new, edge_new = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
-        batch_new, _ = data_batch_format(u_new, v_new, edge_new)
         true_perf_test, opt_perf_test = eval_true_performance(predictive_model, batch_new, edge_new)
 
         print('perf on unseen test', true_perf_test)
@@ -117,6 +123,9 @@ if __name__ == '__main__':
 
         po_before_train_perf.append(po_perf_before.item())
 
+        testset_po_perf_before, _ = eval_true_performance(po_model, batch_new, edge_new)
+        po_test_untrained_perf.append(testset_po_perf_before.item())
+
         trained_po_model, training_loss = predict_optimize_train(po_model, batch_x, edge_mat, rounds=10)
         po_perf_after, _ = eval_true_performance(po_model, batch_x, edge_mat)
         print('predict/optimize perf after training', po_perf_after)
@@ -130,5 +139,7 @@ if __name__ == '__main__':
 
     print('two-stage prediction test scores', np.mean(predict_test_perf))
     print('predict&optimize test scores', np.mean(po_test_perf))
+    print('before training two-stage on same test data', np.mean(predict_test_untrained_perf))
+    print('before training predict&optimize on same test data', np.mean(po_test_untrained_perf))
 
 
