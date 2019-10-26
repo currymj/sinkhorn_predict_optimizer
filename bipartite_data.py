@@ -12,8 +12,9 @@ def generate_data_linear(dim = 10, N = 100):
     return u_feats, v_feats, edge_mat
 
 def generate_data_hide_features(rand_nn, dim=10, keep=5, N=100):
-    u_feats = torch.rand(N, dim)
-    v_feats = torch.rand(N, dim)
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    u_feats = torch.rand(N, dim, device=device)
+    v_feats = torch.rand(N, dim, device=device)
     scores_mat = rand_nn(u_feats) @ (rand_nn(v_feats).t())
     edge_mat = (scores_mat > scores_mat.median()).float()
 

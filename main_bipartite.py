@@ -63,13 +63,14 @@ def eval_true_performance(model, feats_batch, edge_mat):
 
 if __name__ == '__main__':
     dim = 10
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
     #u_feats, v_feats, edge_mat = generate_data_linear(dim=dim, N=100)
     #u_feats, v_feats, edge_mat = generate_data_rand_nn(dim=dim, N=100)
-    rand_nn = nn.Sequential(nn.Linear(dim*5, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim*5))
+    rand_nn = nn.Sequential(nn.Linear(dim*5, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim*5)).to(device)
     u_feats, v_feats, edge_mat = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
     batch_x, batch_y = data_batch_format(u_feats, v_feats, edge_mat)
 
-    predictive_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)])
+    predictive_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)]).to(device)
 
     true_perf_before, opt_perf = eval_true_performance(predictive_model, batch_x, edge_mat)
     print('true perf before', true_perf_before)
@@ -89,7 +90,7 @@ if __name__ == '__main__':
     print('perf on unseen test', true_perf_test)
     print('unseen opt perf', opt_perf_test)
 
-    po_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)])
+    po_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)]).to(device)
     po_perf_before, opt_perf = eval_true_performance(po_model, batch_x, edge_mat)
     print('predict/optimize perf before training', po_perf_before)
 
