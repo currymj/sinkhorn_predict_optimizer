@@ -1,4 +1,4 @@
-from bipartite_data import generate_data_linear, data_batch_format, generate_data_rand_nn, generate_data_hide_features
+from bipartite_data import generate_data_linear, data_batch_format, generate_data_rand_nn, generate_data_hide_features, generate_data_linear_hide_features
 from true_optimal import opt_match
 from sinkhorn import sinkhorn_plan
 import torch
@@ -82,12 +82,12 @@ if __name__ == '__main__':
     po_test_untrained_perf = []
 
     for exp in range(num_experiments):
-        rand_nn = nn.Sequential(nn.Linear(dim*5, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim*5)).to(device)
+        #rand_nn = nn.Sequential(nn.Linear(dim, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim)).to(device)
 
-        u_feats, v_feats, edge_mat = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
+        u_feats, v_feats, edge_mat = generate_data_linear_hide_features(dim=dim*5, keep=dim, N=100)
         batch_x, batch_y = data_batch_format(u_feats, v_feats, edge_mat)
 
-        u_new, v_new, edge_new = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
+        u_new, v_new, edge_new = generate_data_linear_hide_features(dim=dim*5, keep=dim, N=100)
         batch_new, _ = data_batch_format(u_new, v_new, edge_new)
 
         predictive_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)]).to(device)
