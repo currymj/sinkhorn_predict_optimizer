@@ -65,7 +65,8 @@ if __name__ == '__main__':
     dim = 10
     #u_feats, v_feats, edge_mat = generate_data_linear(dim=dim, N=100)
     #u_feats, v_feats, edge_mat = generate_data_rand_nn(dim=dim, N=100)
-    u_feats, v_feats, edge_mat = generate_data_hide_features(dim=dim*5, keep=dim, N=100)
+    rand_nn = nn.Sequential(nn.Linear(dim*5, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim*5))
+    u_feats, v_feats, edge_mat = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
     batch_x, batch_y = data_batch_format(u_feats, v_feats, edge_mat)
 
     predictive_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)])
@@ -81,7 +82,7 @@ if __name__ == '__main__':
 
     #u_new, v_new, edge_new = generate_data_linear(dim=dim, N=100)
     #u_new, v_new, edge_new = generate_data_rand_nn(dim=dim, N=100)
-    u_new, v_new, edge_new = generate_data_hide_features(dim=dim*5, keep=dim, N=100)
+    u_new, v_new, edge_new = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
     batch_new, _ = data_batch_format(u_new, v_new, edge_new)
     true_perf_test, opt_perf_test = eval_true_performance(predictive_model, batch_new, edge_new)
 

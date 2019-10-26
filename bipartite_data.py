@@ -11,8 +11,7 @@ def generate_data_linear(dim = 10, N = 100):
 
     return u_feats, v_feats, edge_mat
 
-def generate_data_hide_features(dim=10, keep=5, N=100):
-    rand_nn = nn.Sequential(nn.Linear(dim, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim ))
+def generate_data_hide_features(rand_nn, dim=10, keep=5, N=100):
     u_feats = torch.rand(N, dim)
     v_feats = torch.rand(N, dim)
     scores_mat = rand_nn(u_feats) @ (rand_nn(v_feats).t())
