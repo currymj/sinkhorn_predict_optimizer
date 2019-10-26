@@ -62,42 +62,73 @@ def eval_true_performance(model, feats_batch, edge_mat):
 
 
 if __name__ == '__main__':
+    num_experiments = 10
     dim = 10
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
-    #u_feats, v_feats, edge_mat = generate_data_linear(dim=dim, N=100)
-    #u_feats, v_feats, edge_mat = generate_data_rand_nn(dim=dim, N=100)
-    rand_nn = nn.Sequential(nn.Linear(dim*5, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim*5)).to(device)
-    u_feats, v_feats, edge_mat = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
-    batch_x, batch_y = data_batch_format(u_feats, v_feats, edge_mat)
 
-    predictive_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)]).to(device)
+    # 'perf' here refers to actual match value, not the loss observed at train time
 
-    true_perf_before, opt_perf = eval_true_performance(predictive_model, batch_x, edge_mat)
-    print('true perf before', true_perf_before)
-    print('true opt perf', opt_perf)
+    train_opt_perf = []
+    test_opt_perf = []
 
-    trained_model, training_loss = prediction_train(predictive_model, batch_x, batch_y)
+    predict_before_train_perf = []
+    predict_after_train_perf = []
+    predict_test_perf = []
 
-    true_perf_after, opt_perf = eval_true_performance(predictive_model, batch_x, edge_mat)
-    print('true perf after', true_perf_after)
+    po_before_train_perf = []
+    po_after_train_perf = []
+    po_test_perf = []
 
-    #u_new, v_new, edge_new = generate_data_linear(dim=dim, N=100)
-    #u_new, v_new, edge_new = generate_data_rand_nn(dim=dim, N=100)
-    u_new, v_new, edge_new = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
-    batch_new, _ = data_batch_format(u_new, v_new, edge_new)
-    true_perf_test, opt_perf_test = eval_true_performance(predictive_model, batch_new, edge_new)
+    for exp in range(num_experiments):
+        rand_nn = nn.Sequential(nn.Linear(dim*5, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, dim*5)).to(device)
 
-    print('perf on unseen test', true_perf_test)
-    print('unseen opt perf', opt_perf_test)
+        u_feats, v_feats, edge_mat = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
+        batch_x, batch_y = data_batch_format(u_feats, v_feats, edge_mat)
 
-    po_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)]).to(device)
-    po_perf_before, opt_perf = eval_true_performance(po_model, batch_x, edge_mat)
-    print('predict/optimize perf before training', po_perf_before)
+        predictive_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)]).to(device)
 
-    trained_po_model, training_loss = predict_optimize_train(po_model, batch_x, edge_mat, rounds=10)
-    po_perf_after, _ = eval_true_performance(po_model, batch_x, edge_mat)
-    print('predict/optimize perf after training', po_perf_after)
+        true_perf_before, opt_perf = eval_true_performance(predictive_model, batch_x, edge_mat)
+        print('true perf before', true_perf_before)
+        print('true opt perf', opt_perf)
 
-    true_po_test, opt_perf_test = eval_true_performance(po_model, batch_new, edge_new)
-    print('predict/optimize unseen test perf', true_po_test)
+        predict_before_train_perf.append(true_perf_before.item())
+        train_opt_perf.append(opt_perf.item())
+
+        trained_model, training_loss = prediction_train(predictive_model, batch_x, batch_y)
+
+        true_perf_after, opt_perf = eval_true_performance(predictive_model, batch_x, edge_mat)
+        print('true perf after', true_perf_after)
+
+        predict_after_train_perf.append(true_perf_after.item())
+
+        u_new, v_new, edge_new = generate_data_hide_features(rand_nn, dim=dim*5, keep=dim, N=100)
+        batch_new, _ = data_batch_format(u_new, v_new, edge_new)
+        true_perf_test, opt_perf_test = eval_true_performance(predictive_model, batch_new, edge_new)
+
+        print('perf on unseen test', true_perf_test)
+        print('unseen opt perf', opt_perf_test)
+
+        predict_test_perf.append(true_perf_test.item())
+        test_opt_perf.append(opt_perf_test.item())
+
+        po_model = nn.Sequential(*[nn.Linear(dim * 2, 128), nn.ReLU(), nn.Linear(128, 1)]).to(device)
+        po_perf_before, opt_perf = eval_true_performance(po_model, batch_x, edge_mat)
+        print('predict/optimize perf before training', po_perf_before)
+
+        po_before_train_perf.append(po_perf_before.item())
+
+        trained_po_model, training_loss = predict_optimize_train(po_model, batch_x, edge_mat, rounds=10)
+        po_perf_after, _ = eval_true_performance(po_model, batch_x, edge_mat)
+        print('predict/optimize perf after training', po_perf_after)
+
+        po_after_train_perf.append(po_perf_after.item())
+
+        true_po_test, opt_perf_test = eval_true_performance(po_model, batch_new, edge_new)
+        print('predict/optimize unseen test perf', true_po_test)
+
+        po_test_perf.append(true_po_test.item())
+
+    print('two-stage prediction test scores', np.mean(predict_test_perf))
+    print('predict&optimize test scores', np.mean(po_test_perf))
+
 
