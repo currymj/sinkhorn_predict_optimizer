@@ -60,13 +60,13 @@ if __name__ == '__main__':
     num_elems = int(np.sqrt(feature_instances.shape[1]))
     predictive_model = nn.Sequential(*[nn.Linear(dim, 128), nn.ReLU(), nn.Linear(128,128), nn.ReLU(), nn.Linear(128, 1)])
     pred_criterion = nn.BCEWithLogitsLoss()
-    pred_optimizer = optim.Adam(predictive_model.parameters(), lr=1e-4, weight_decay=1e-3)
+    pred_optimizer = optim.Adam(predictive_model.parameters(), lr=1e-3)
 
-    po_model = nn.Sequential(*[nn.Linear(dim, 128), nn.ReLU(), nn.Linear(128,128), nn.ReLU(), nn.Linear(128, 1)])
-    po_optimizer = optim.Adam(po_model.parameters(), lr=1e-4, weight_decay=1e-3)
+    po_model = nn.Sequential(*[nn.Linear(dim, 128), nn.ReLU(), nn.Linear(128, 128), nn.ReLU(), nn.Linear(128, 1)])
+    po_optimizer = optim.Adam(po_model.parameters(), lr=1e-3)
 
     for epochs in tqdm(range(100)):
-        for ind in range(5):
+        for ind in range(8):
             batch_x = torch.from_numpy(feature_instances[ind]).float()
             batch_y = torch.from_numpy(edge_instances[ind]).float().view(-1,1)
             edge_mat = batch_y.view(num_elems,num_elems)
@@ -75,8 +75,7 @@ if __name__ == '__main__':
 
             predict_optimize_train(po_model, po_optimizer, batch_x, edge_mat, rounds=10)
 
-
-    for ind in range(5,10):
+    for ind in range(8, 10):
         batch_x = torch.from_numpy(feature_instances[ind]).float()
         batch_y = torch.from_numpy(edge_instances[ind]).float().view(-1,1)
         edge_mat = batch_y.view(num_elems,num_elems)
