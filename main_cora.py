@@ -30,22 +30,14 @@ def trainbatch(model, criterion, optimizer, vecs, edges, device='cuda'):
     optimizer.step()
     return save_loss
 
-def prediction_train(model, vecs, edges, epochs=1000):
-    criterion = nn.BCEWithLogitsLoss()
-    optimizer = optim.Adam(model.parameters())
+def prediction_train(model, optimizer, vecs, edges, criterion):
     losses = []
-    for i in tqdm(range(epochs)):
-        loss = trainbatch(model, criterion, optimizer, vecs, edges)
-        losses.append(loss)
-    return model, losses
+    loss = trainbatch(model, criterion, optimizer, vecs, edges)
+    return model, loss
 
-def predict_optimize_train(model, vecs, edge_mat, epochs=1000, eps=1e-1, rounds=5):
-    optimizer = optim.Adam(model.parameters())
-    losses = []
-    for i in tqdm(range(epochs)):
-        loss = trainbatch_sinkhorn(model, optimizer, vecs, edge_mat, eps=eps, rounds=rounds)
-        losses.append(loss)
-    return model, losses
+def predict_optimize_train(model, optimizer, vecs, edge_mat, eps=1e-1, rounds=5):
+    loss = trainbatch_sinkhorn(model, optimizer, vecs, edge_mat, eps=eps, rounds=rounds)
+    return model, loss
 
 def eval_true_performance(model, feats_batch, edge_mat):
     true_opt = torch.sum(opt_match(edge_mat) * edge_mat)
@@ -53,6 +45,12 @@ def eval_true_performance(model, feats_batch, edge_mat):
     predict_opt = torch.sum(opt_match(model_predictions) * edge_mat)
     return predict_opt, true_opt
 
+def eval_loss(model, feats_batch, edges_batch):
+    criterion = nn.BCEWithLogitsLoss()
+    model.eval()
+    out = model(feats_batch)
+    loss = criterion(out, edges_batch)
+    return loss
 
 if __name__ == '__main__':
     with open('cora_data.pickle', 'rb') as datafile:
@@ -61,16 +59,22 @@ if __name__ == '__main__':
     dim = feature_instances.shape[2]
     num_elems = int(np.sqrt(feature_instances.shape[1]))
     predictive_model = nn.Sequential(*[nn.Linear(dim, 128), nn.ReLU(), nn.Linear(128,128), nn.ReLU(), nn.Linear(128, 1)])
+    pred_criterion = nn.BCEWithLogitsLoss()
+    pred_optimizer = optim.Adam(predictive_model.parameters(), lr=1e-4, weight_decay=1e-3)
 
     po_model = nn.Sequential(*[nn.Linear(dim, 128), nn.ReLU(), nn.Linear(128,128), nn.ReLU(), nn.Linear(128, 1)])
-    for ind in range(5):
-        batch_x = torch.from_numpy(feature_instances[ind]).float()
-        batch_y = torch.from_numpy(edge_instances[ind]).float().view(-1,1)
-        edge_mat = batch_y.view(num_elems,num_elems)
+    po_optimizer = optim.Adam(po_model.parameters(), lr=1e-4, weight_decay=1e-3)
 
-        prediction_train(predictive_model, batch_x, batch_y, epochs=200)
+    for epochs in tqdm(range(100)):
+        for ind in range(5):
+            batch_x = torch.from_numpy(feature_instances[ind]).float()
+            batch_y = torch.from_numpy(edge_instances[ind]).float().view(-1,1)
+            edge_mat = batch_y.view(num_elems,num_elems)
 
-        predict_optimize_train(po_model, batch_x, edge_mat, rounds=10, epochs=200)
+            prediction_train(predictive_model, pred_optimizer, batch_x, batch_y, pred_criterion)
+
+            predict_optimize_train(po_model, po_optimizer, batch_x, edge_mat, rounds=10)
+
 
     for ind in range(5,10):
         batch_x = torch.from_numpy(feature_instances[ind]).float()
@@ -84,3 +88,6 @@ if __name__ == '__main__':
         true_perf_test, _ = eval_true_performance(predictive_model, batch_x, edge_mat)
 
         print('perf on unseen test', true_perf_test)
+
+        print('two-stage prediction error', eval_loss(predictive_model, batch_x, batch_y))
+        print('p&o prediction error', eval_loss(po_model, batch_x, batch_y))
